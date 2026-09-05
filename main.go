@@ -1,22 +1,20 @@
 package main
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
+	"net/http"
 	"sync"
 	"time"
 )
 
 // UserRecord represents a typed row in our dataset
 type UserRecord struct {
-	ID    int
-	Name  string
-	Email string
-	Age   int
-	State string
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Age   int    `json:"age"`
+	State string `json:"state"`
 }
 
 // DataFrame represents our data pipeline stream
@@ -56,72 +54,50 @@ func (df *DataFrame[T]) Filter(numWorkers int, predicate func(T) bool) *DataFram
 	return &DataFrame[T]{inputStream: outputStream}
 }
 
-func main() {
-	start := time.Now()
-	
-	// 1. Initialize our DataFrame stream
+// handleProcess Ingests JSON batches over HTTP and streams them through the dataframe pipeline
+func handleProcess(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var records []UserRecord
+	if err := json.NewDecoder(r.Body).Decode(&records); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	// Initialize our streaming pipeline
 	df := NewDataFrame[UserRecord](100)
 
-	// 2. Concurrently read and stream data from data.csv line-by-line
+	// Stream the parsed JSON records into the channel concurrently
 	go func() {
-		defer close(df.inputStream)
-
-		file, err := os.Open("data.csv")
-		if err != nil {
-			fmt.Printf("Error opening file: %v\n", err)
-			return
+		for _, record := range records {
+			df.inputStream <- record
 		}
-		defer file.Close()
-
-		reader := csv.NewReader(file)
-		
-		// Skip the header row (id, name, email, age, state)
-		if _, err := reader.Read(); err != nil {
-			return
-		}
-
-		// Read line-by-line streaming loop
-		for {
-			record, err := reader.Read()
-			if err == io.EOF {
-				break // End of file reached smoothly
-			}
-			if err != nil {
-				continue // Skip bad/corrupted rows
-			}
-
-			// Convert string fields into our type-safe fields
-			id, _ := strconv.Atoi(record[0])
-			age, _ := strconv.Atoi(record[3])
-
-			// Stream the structured data straight into the pipeline
-			df.inputStream <- UserRecord{
-				ID:    id,
-				Name:  record[1],
-				Email: record[2],
-				Age:   age,
-				State: record[4],
-			}
-		}
+		close(df.inputStream)
 	}()
 
-	// 3. Filter data concurrently using 4 worker processes
-	// Let's hunt for users over 21 living in California (CA)
+	// Execute concurrent filtering logic across 4 goroutines
 	processedDf := df.Filter(4, func(u UserRecord) bool {
 		return u.Age > 21 && u.State == "CA"
 	})
 
-	// 4. Consume and print the streamed outputs
-	matchedCount := 0
-	fmt.Println("Ingesting and processing data.csv concurrently...")
-	fmt.Println("---------------------------------------------------------")
-	
+	// Collect the filtered results to send back in the HTTP response
+	var results []UserRecord
 	for row := range processedDf.inputStream {
-		matchedCount++
-		fmt.Printf("[Matched User] ID: %d | %s | Age: %d | %s\n", row.ID, row.Name, row.Age, row.State)
+		results = append(results)
 	}
 
-	fmt.Println("---------------------------------------------------------")
-	fmt.Printf("Engine Completed in %v\n", time.Since(start))
-	fmt.Printf("Total matches processed: %d\n", matchedCount)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+func main() {
+	http.HandleFunc("/process", handleProcess)
+
+	fmt.Println("Starting go-etl microservice engine on port 8080...")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Printf("Server failed to start: %v\n", err)
+	}
 }
