@@ -24,3 +24,6 @@ jobs:
 
     - name: Compile data engine binary
       run: go build -v -o go-etl .
+
+    - name: Run automated unit tests
+      run: go test -v ./...
