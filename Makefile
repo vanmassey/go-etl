@@ -1,10 +1,10 @@
 # Run the concurrent data pipeline locally
 run:
-	go run main.go
+	go run .
 
 # Compile the Go code into a single, high-performance binary file
 build:
-	go build -o go-etl main.go
+	go build -o go-etl .
 
 # Clean up compiled binary executables
 clean:
