@@ -1,36 +1,57 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
-func TestDataFrameFilter(t *testing.T) {
-	// 1. Initialize a test DataFrame with a buffer of 10 rows
-	df := NewDataFrame[UserRecord](10)
-
-	// 2. Insert mock test records into the pipeline channel
-	go func() {
-		df.inputStream <- UserRecord{ID: 1, Name: "Test User 1", Age: 25, State: "CA"}
-		df.inputStream <- UserRecord{ID: 2, Name: "Test User 2", Age: 19, State: "NY"}
-		df.inputStream <- UserRecord{ID: 3, Name: "Test User 3", Age: 30, State: "CA"}
-		close(df.inputStream)
-	}()
-
-	// 3. Execute the filter logic using 2 worker routines
-	processedDf := df.Filter(2, func(u UserRecord) bool {
-		return u.Age > 21 && u.State == "CA"
-	})
-
-	// 4. Verify the results output correctly
-	matchedCount := 0
-	for row := range processedDf.inputStream {
-		matchedCount++
-		if row.State != "CA" || row.Age <= 21 {
-			t.Errorf("Error: Row leaked through filter improperly: %+v", row)
-		}
+func TestHandleProcessMicroservice(t *testing.T) {
+	// 1. Arrange a mock dataset array simulating inbound API traffic
+	mockInput := []UserRecord{
+		{ID: 1, Name: "Alice", Age: 25, State: "CA"},
+		{ID: 2, Name: "Bob", Age: 19, State: "NY"},
+		{ID: 3, Name: "Charlie", Age: 30, State: "CA"},
 	}
 
-	if matchedCount != 2 {
-		t.Errorf("Error: Expected exactly 2 matches, but engine processed: %d", matchedCount)
+	payload, err := json.Marshal(mockInput)
+	if err != nil {
+		t.Fatalf("Failed to marshal mock input data: %v", err)
+	}
+
+	// 2. Construct a mock HTTP request hitting our processing endpoint
+	req, err := http.NewRequest(http.MethodPost, "/process", bytes.NewBuffer(payload))
+	if err != nil {
+		t.Fatalf("Failed to create mock HTTP request: %v", err)
+	}
+
+	// 3. Initialize an HTTP response recorder to capture the microservice reply
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(handleProcess)
+
+	// 4. Act: Serve the request over the mock server environment
+	handler.ServeHTTP(rr, req)
+
+	// 5. Assert: Verify the response code is 200 OK
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected status code 200, but got: %d", rr.Code)
+	}
+
+	// 6. Decode and validate the filtered streaming response payload
+	var results []UserRecord
+	if err := json.NewDecoder(rr.Body).Decode(&results); err != nil {
+		t.Fatalf("Failed to decode response payload: %v", err)
+	}
+
+	if len(results) != 2 {
+		t.Errorf("Expected exactly 2 matched records, but received: %d", len(results))
+	}
+
+	for _, user := range results {
+		if user.State != "CA" || user.Age <= 21 {
+			t.Errorf("Error: Invalid record leaked through pipeline filter constraints: %+v", user)
+		}
 	}
 }
