@@ -1,15 +1,3 @@
-name: Go Continuous Integration
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    
     steps:
     - name: Check out repository code
       uses: actions/checkout@v4
@@ -18,6 +6,9 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
+
+    - name: Tidy dependencies and update checksum registry
+      run: go mod tidy
 
     - name: Verify code formatting
       run: go fmt ./...
