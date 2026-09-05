@@ -1,4 +1,4 @@
-=# go-etl
+# go-etl
 
 A high-performance, type-safe concurrent ETL microservice engine built in Go. It ingests high-volume JSON data arrays via HTTP, streaming records line-by-line across multiple concurrent CPU worker threads under a constant, low memory footprint.
 
