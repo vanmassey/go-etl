@@ -1,0 +1,31 @@
+id,name,email,age,state
+1,Alice Vance,alice@vanmassey.com,24,CA
+2,Bob Smith,bob@example.com,19,NY
+3,Charlie Massey,charlie@vanmassey.com,31,CA
+4,Diana Prince,diana@dc.com,28,TX
+5,Evan Wright,evan@tech.com,45,FL
+6,Fiona Gallagher,fiona@chicago.com,22,CA
+7,George Costanza,george@vandelay.com,38,NY
+8,Hannah Abbott,hannah@hogwarts.com,17,UK
+9,Ian Malcolm,ian@jurassic.com,42,CA
+10,Julia Roberts,julia@hollywood.com,20,FL
+11,Kevin Mitnick,kevin@cyber.net,51,NV
+12,Laura Croft,laura@tomb.org,29,UK
+13,Miles Morales,miles@spider.web,16,NY
+14,Ned Stark,ned@winterfell.gov,48,TX
+15,Olivia Dunham,olivia@fringe.gov,34,MA
+16,Peter Parker,peter@dailybugle.com,23,NY
+17,Quentin Tarantino,quentin@movies.com,58,CA
+18,Rachel Green,rachel@ralphlauren.com,26,NY
+19,Sindre Sorhus,sindre@sindresorhus.com,36,CA
+20,Tony Stark,tony@stark.com,44,CA
+21,Uma Thurman,uma@killbill.org,30,TX
+22,Victor Von Doom,victor@latveria.gov,40,FL
+23,Wanda Maximoff,wanda@avengers.org,27,NJ
+24,Xavier Charles,charles@xmen.edu,62,NY
+25,Yvaine Star,yvaine@stardust.com,21,CA
+26,Zachary Levi,zach@nerdhert.com,33,CA
+27,Bruce Wayne,bruce@waynecorp.com,35,NJ
+28,Clark Kent,clark@dailyplanet.com,29,KS
+29,Barry Allen,barry@star-labs.com,25,TX
+30,Hal Jordan,hal@ferrisair.com,32,CA
