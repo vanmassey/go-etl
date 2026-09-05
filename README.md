@@ -1,21 +1,24 @@
-# go-etl
+=# go-etl
 
-A type-safe, concurrent ETL streaming data engine built in Go. It processes high-volume datasets using zero external dependencies, leveraging channels, generics, and goroutines to process data line-by-line under a constant memory footprint.
+A high-performance, type-safe concurrent ETL microservice engine built in Go. It ingests high-volume JSON data arrays via HTTP, streaming records line-by-line across multiple concurrent CPU worker threads under a constant, low memory footprint.
 
 ## Features
-- **Concurrent Processing:** Uses Go's native goroutines to multiplex filtering logic across multiple CPU worker threads simultaneously.
-- **Low Memory Footprint:** Streams datasets line-by-line rather than loading entire files into system RAM, preventing memory spikes or out-of-memory crashes on large files.
-- **Type-Safe Generics:** Built entirely using Go generics, allowing the pipeline engine to ingest and stream any custom data structure seamlessly.
-- **Zero Dependencies:** Relies purely on the Go standard library for network, file, and data processing.
+- **Concurrent API Processing:** Multiplexes inbound HTTP request payloads across a pool of concurrent worker goroutines.
+- **Low Memory Streaming:** Uses Go channels to pipe incoming data dynamically, preventing memory spikes or out-of-memory crashes on massive datasets.
+- **Type-Safe Generics:** Built using Go generics, allowing the internal streaming pipeline to process any structured schema seamlessly.
+- **Continuous Integration:** Built-in automated GitHub Actions validation loops for syntax formatting, compilation, and unit tests.
+- **Containerized Architecture:** Complete with a multi-stage Docker build, yielding an production-ready runtime footprint of under 20MB.
 
 ## Project Structure
-- `main.go`: The core execution logic and concurrent pipeline architecture.
-- `data.csv`: A mock dataset containing system logs for worker pipeline validation.
-- `Makefile`: Project automation shortcuts for local building, running, and formatting.
-- `.github/workflows/go.yml`: Automated continuous integration configuration to verify compilation on push events.
+- `main.go`: Core execution logic and concurrent HTTP microservice pipeline.
+- `main_test.go`: Automated unit testing suite validating mock network API payloads.
+- `Makefile`: Project automation shortcuts for local running, compiling, and formatting.
+- `Dockerfile`: Multi-stage container instructions for lean production deployment.
+- `.github/workflows/go.yml`: Cloud integration runner validating pull requests on push events.
 
-## Installation and Setup
+## Getting Started
 
+### Local Setup
 Ensure you have a modern Go environment installed locally, then execute:
 
 ```bash
@@ -24,10 +27,26 @@ cd go-etl
 make run
 ```
 
-To compile the application down into a single, high-performance binary executable machine-code file:
+### Docker Deployment
+To build and run the microservice within an isolated, lightweight container environment:
 
 ```bash
-make build
+docker build -t go-etl .
+docker run -p 8080:8080 go-etl
+```
+
+## Interfacing with the API
+
+Once the engine is running on port `8080`, transmit a `POST` request to the `/process` endpoint containing a JSON array of records to filter:
+
+```bash
+curl -X POST http://localhost:8080/process \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"id": 1, "name": "Alice", "age": 25, "state": "CA"},
+    {"id": 2, "name": "Bob", "age": 19, "state": "NY"},
+    {"id": 3, "name": "Charlie", "age": 30, "state": "CA"}
+  ]'
 ```
 
 ## License
