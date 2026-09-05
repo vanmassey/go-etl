@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # The database service containing the records
+  etl_db:
+    image: postgres:16-alpine
+    container_name: etl_database_server
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: etl_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Your high-performance Go application
+  go_etl_api:
+    build: .
+    container_name: go_etl_microservice
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_CONN_STR=postgresql://postgres:secret@etl_db:5432/etl_db?sslmode=disable
+    depends_on:
+      - etl_db
+
+volumes:
+  pgdata:
