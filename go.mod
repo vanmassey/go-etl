@@ -1,1 +1,1 @@
-module ://github.com/vanmassey
+module github.com/vanmassey
